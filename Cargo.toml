@@ -32,6 +32,7 @@ members = ["bench"]
 exclude = ["examples", "regex-automata-debug"]
 
 [lib]
+crate-type = ["cdylib"]      # Creates dynamic lib
 bench = false
 
 [features]
@@ -40,9 +41,14 @@ std = ["regex-syntax"]
 transducer = ["std", "fst"]
 
 [dependencies]
+libc = "*"
 byteorder = { version = "1.2.7", default-features = false }
 fst = { version = "0.4.0", optional = true }
 regex-syntax = { version = "0.6.16", optional = true }
+
+# For Clamor.
+[dependencies.rsmalloc]
+path = "../rsmalloc"
 
 [dev-dependencies]
 bstr = { version = "0.2", default-features = false, features = ["std"] }
@@ -60,16 +66,17 @@ name = "default"
 [profile.dev]
 # Running tests takes too long in debug mode, so we forcefully always build
 # with optimizations. Unfortunate, but, ¯\_(ツ)_/¯.
-opt-level = 3
+opt-level = 2
 debug = true
 
 [profile.test]
 # Running tests takes too long in debug mode, so we forcefully always build
 # with optimizations. Unfortunate, but, ¯\_(ツ)_/¯.
-opt-level = 3
+opt-level = 2
 debug = true
 
 [profile.release]
+opt-level = 2
 debug = true
 
 [profile.bench]

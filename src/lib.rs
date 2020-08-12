@@ -282,8 +282,13 @@ With some of the downsides out of the way, here are some positive differences:
   increase compilation times dramatically.
 */
 
-#![deny(missing_docs)]
+//#![deny(missing_docs)]
 #![cfg_attr(not(feature = "std"), no_std)]
+
+extern crate rsmalloc;
+
+#[global_allocator]
+static GLOBAL: rsmalloc::Allocator = rsmalloc::Allocator;
 
 #[cfg(feature = "std")]
 extern crate core;
@@ -357,4 +362,25 @@ pub mod dense {
 /// [`DenseDFA::to_sparse`](../enum.DenseDFA.html#method.to_sparse).
 pub mod sparse {
     pub use sparse_imp::*;
+}
+
+use std::ffi::{CStr};
+
+extern crate libc;
+use libc::c_char;
+
+#[no_mangle]
+pub extern "C" fn regex_create(pattern: *const c_char) -> *mut Regex<DenseDFA<Vec<usize>, usize>> {
+    println!("Calling regex new");
+    let pattern_str = unsafe { CStr::from_ptr(pattern).to_str().unwrap() };
+    let re = Regex::new(pattern_str).unwrap();
+    Box::into_raw(Box::new(re))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn regex_match(re: *mut Regex<DenseDFA<Vec<usize>, usize>>, text: *const c_char) -> usize {
+    let re = re.as_ref().unwrap(); 
+    let text_bytes = CStr::from_ptr(text).to_bytes();
+    let matches: Vec<(usize, usize)> = re.find_iter(text_bytes).collect();
+    matches.len()
 }
